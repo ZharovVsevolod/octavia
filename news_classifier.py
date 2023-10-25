@@ -1,6 +1,6 @@
-from utils.load_data import load_data_news
-from utils.models import *
-from utils.train import train, save_model
+from octavia.utils.load_data import load_data_news
+from octavia.utils.models import *
+from octavia.utils.train import train, save_model
 import wandb
 
 # Загрузка данных
