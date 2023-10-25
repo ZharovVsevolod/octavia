@@ -26,8 +26,7 @@ loss_history, best_model, optimizer = train(
     epoch_n=100,
     batch_size=32,
     device="cuda",
-    lr_scheduler_default=lr_scheduler,
-    need_wandb=False
+    lr_scheduler_default=lr_scheduler
 )
 
 # Закрываем пробег wandb
