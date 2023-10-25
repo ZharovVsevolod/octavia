@@ -60,7 +60,7 @@ def train(model, train_dataset, test_dataset, criterion, optimizer_default=None,
     loss_history = []
 
     # Начинаем обучение
-    for epoch_i in tqdm(range(1, epoch_n+1)):
+    for epoch_i in range(1, epoch_n+1):
         try:
             print(f'Эпоха {epoch_i}')
             
