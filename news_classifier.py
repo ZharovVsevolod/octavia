@@ -1,6 +1,7 @@
 from octavia.utils.load_data import load_data_news
 from octavia.utils.models import *
-from octavia.utils.train import train, save_model
+from octavia.legacy.old_train import train, save_model
+from octavia.legacy.old_models import Classification_LSTM, lm_cross_entropy, lr_scheduler
 import wandb
 
 # Загрузка данных

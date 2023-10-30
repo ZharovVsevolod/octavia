@@ -93,7 +93,7 @@ def train(model, train_dataset, test_dataset, criterion, optimizer_default=None,
             mean_train_loss /= train_batches_n
             print(f"Среднее значение функции потерь на обучении - {mean_train_loss}")
             if need_wandb:
-                wandb.log({"Train loss" : mean_train_loss})
+                wandb.log({"Train loss" : mean_train_loss}, commit=False)
 
             #-----Валидация модели-----
             model.eval()
@@ -137,12 +137,15 @@ def train(model, train_dataset, test_dataset, criterion, optimizer_default=None,
                 
                 print("Новая лучшая модель!")
                 if need_wandb:
-                    wandb.log({"New best model" : 1 if (mean_val_loss < best_val_loss) else 0})
+                    wandb.log({"New best model" : 1})
 
             # Если модель долго не улучшается, значит, она достигла порога
             elif epoch_i - best_epoch_i > early_stopping_patience:
                 print(f"Модель не улучшилась за последние {early_stopping_patience} эпох, прекращаем обучение")
                 break
+            
+            elif need_wandb:
+                wandb.log({"New best model" : 0})
 
             if lr_scheduler is not None:
                 lr_scheduler.step(mean_val_loss)
