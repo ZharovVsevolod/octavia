@@ -1,3 +1,8 @@
 octavia/__pycache__/
 octavia/utils/__pycache__/
 octavia/legacy/__pycache__/
+model_weights/
+data/data_bpe.yttm
+data/data_edit.txt
+data/data_test.txt
+data/data_train.txt

@@ -5,6 +5,7 @@ from torch.nn import functional as F
 import lightning as L
 from torchmetrics.functional import accuracy
 import numpy as np
+from .generators import BeamGenerator
 
 def get_params_number(model):
     return sum(t.numel() for t in model.parameters())
@@ -41,6 +42,7 @@ class Light_Transformer_NLP(L.LightningModule):
     def __init__(self, vocab_size:int, embedding_size:int, backbone:nn.Module, emb_dropout:int=0.0, 
                  lr:float=1e-5, l2_reg_alpha:float=0.0):
         super().__init__()
+        self.save_hyperparameters()
 
         self.embedding_size = embedding_size
         self.embeddings = nn.Embedding(vocab_size, embedding_size, padding_idx=0)
@@ -73,6 +75,9 @@ class Light_Transformer_NLP(L.LightningModule):
         )
         logits = self.out(target_features)  # Shape =  (BatchSize, TargetLen, VocabSize)
         return logits
+    
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        return self(batch)
     
     def mask_for_transformer(self, length):
         # Создаём маску единиц
@@ -123,20 +128,43 @@ class Light_Transformer_NLP(L.LightningModule):
 
         pred = self(x)
         pred_loss = self.loss(pred, y)
+        self.log("val_loss", pred_loss, prog_bar=True)
         # preds = torch.argmax(logits, dim=1)
         # acc = accuracy(preds, y, task="multiclass", num_classes=self.num_classes)
-        self.log("val_loss", pred_loss, prog_bar=True)
         # self.log("val_acc", acc, prog_bar=True)
-        # self.val_loss = loss
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate, weight_decay=self.l2_reg_alpha)
-        # sch = self.lr_scheduler(optimizer)
+        sch = self.lr_scheduler(optimizer)
+        return (
+            {'optimizer': optimizer, 'lr_scheduler': {"scheduler": sch, "monitor": "val_loss"}},
+        )
 
-        return optimizer
-        return (
-            {'optimizer': optimizer, 'lr_scheduler': sch},
+class LightCheckPoint(L.Callback):
+    def __init__(self, data_module, phrase_for_gen:str, beamsize=5, logger=None) -> None:
+        super().__init__()
+        self.phrase = phrase_for_gen
+        self.data_module = data_module
+        self.beamsize = beamsize
+        if logger is not None:
+            self.logger = logger
+    
+    def generation_and_log(self, pl_module: L.LightningModule):
+        # Генерация текста для понимания, как модель тренируется
+        beam_generator = BeamGenerator(pl_module, self.data_module.tokenizer)
+        beam_gen_variants = beam_generator(
+            seed_text=self.phrase, 
+            beamsize=self.beamsize, 
+            return_hypotheses_n=5,
+            need_reweight=True
         )
-        return (
-            {'optimizer': optimizer, 'lr_scheduler': {"scheduler": sch, "monitor": self.val_loss}},
-        )
+        texts = []
+        for score, pred_txt in beam_gen_variants:
+            texts.append(pred_txt)
+        self.logger.log_text(key="Generated phrase", columns=["text_1", "text_2", "text_3", "text_4", "text_5"], data=[texts])
+        
+    def on_validation_epoch_end(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
+        self.generation_and_log(pl_module)
+    
+    def on_test_epoch_end(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
+        self.generation_and_log(pl_module)
