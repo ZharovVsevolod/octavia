@@ -146,8 +146,7 @@ class LightCheckPoint(L.Callback):
         self.phrase = phrase_for_gen
         self.data_module = data_module
         self.beamsize = beamsize
-        if logger is not None:
-            self.logger = logger
+        self.logger = logger
     
     def generation_and_log(self, pl_module: L.LightningModule):
         # Генерация текста для понимания, как модель тренируется
@@ -161,7 +160,8 @@ class LightCheckPoint(L.Callback):
         texts = []
         for score, pred_txt in beam_gen_variants:
             texts.append(pred_txt)
-        self.logger.log_text(key="Generated phrase", columns=["text_1", "text_2", "text_3", "text_4", "text_5"], data=[texts])
+        if self.logger is not None:
+            self.logger.log_text(key="Generated phrase", columns=["text_1", "text_2", "text_3", "text_4", "text_5"], data=[texts])
         
     def on_validation_epoch_end(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
         self.generation_and_log(pl_module)
