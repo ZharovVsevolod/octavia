@@ -1,5 +1,5 @@
 # Project Octavia  
-[ссылка на wandb](wandb.ai/lost_in_thoughts/project_octavia)
+[ссылка на wandb](https://wandb.ai/lost_in_thoughts/project_octavia)
 
 ## Проблема с linux
 Если запускать проект на linux-системе, то в pyproject.toml надо изменить ссылки импорта на следующие:  
